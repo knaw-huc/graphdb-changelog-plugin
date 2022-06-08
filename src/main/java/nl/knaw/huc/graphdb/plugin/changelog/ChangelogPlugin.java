@@ -17,7 +17,7 @@ import java.util.Date;
 
 import static org.eclipse.rdf4j.model.util.Statements.statement;
 
-public class ChangelogPlugin extends PluginBase implements StatementListener {
+public class ChangelogPlugin extends PluginBase implements StatementListener, ClearInterpreter {
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
     private Instant curInstant;
@@ -47,6 +47,20 @@ public class ChangelogPlugin extends PluginBase implements StatementListener {
         }
 
         return false;
+    }
+
+    @Override
+    public void beforeClear(long context, PluginConnection pluginConnection) {
+        StatementIterator it = pluginConnection.getStatements().get(0, 0, 0, context);
+        while (it.next() && !it.isImplicit()) {
+            logStatement(it.subject, it.predicate, it.object, it.context, false, pluginConnection);
+        }
+        it.close();
+    }
+
+    @Override
+    public void afterClear(long context, PluginConnection pluginConnection) {
+        // Do nothing
     }
 
     private void logStatement(long subject, long predicate, long object, long context, boolean isAssertion,
